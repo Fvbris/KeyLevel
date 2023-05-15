@@ -1,0 +1,80 @@
+//@version=5
+
+indicator("ICT NEW YORK MIDNIGHT OPEN AND 8.30 AM OPEN", "ICT MIDNIGHT AND 8.30AM OPEN", true, max_lines_count=500)
+
+iMDisplay = input.bool    (true, "Display", group="New York Midnight Day Divider")
+iMDColor   = input.color   (#58A2B0, "Color", group="New York Midnight Day Divider")
+iMDStyle   = input.string  ("Solid", "Line Style", options=["Solid", "Dotted", "Dashed"], group="New York Midnight Day Divider")
+//iMDHistory = input.bool    (false, "History", group="New York Midnight Day Divider")
+
+iMTime    = input.session ('0000-0001:1234567', "Session", group="New York Midnight Open")
+iMStyle   = input.string  ("Dashed", "Line Style", options=["Solid", "Dotted", "Dashed"], group="New York Midnight Open")
+iMColor   = input.color   (#58A2B0, "Color", group="New York Midnight Open")
+iMHistory = input.bool    (true, "History", group="New York Midnight Open")
+iMLabel   = input.bool    (true, "Show Label", group="New York Midnight Open")
+
+i8Display = input.bool    (true, "Display", group="New York 8:30 Open")
+i8Time    = input.session ('0830-0831:1234567', "Session", group="New York 8:30 Open")
+i8Style   = input.string  ("Dotted", "Line Style", options=["Solid", "Dotted", "Dashed"], group="New York 8:30 Open")
+i8Color   = input.color   (#58A2B0, "Color", group="New York 8:30 Open")
+i8History = input.bool    (true, "History", group="New York 8:30 Open")
+i8Label   = input.bool    (true, "Show Label", group="New York 8:30 Open")
+
+tMidnight = time          ("1", iMTime)
+t830      = time          ("1", i8Time)
+
+_MStyle   = iMStyle ==    "Solid" ? line.style_solid : iMStyle == "Dotted" ? line.style_dotted : line.style_dashed
+_8Style   = i8Style ==    "Solid" ? line.style_solid : i8Style == "Dotted" ? line.style_dotted : line.style_dashed
+_DStyle   = iMDStyle ==   "Solid" ? line.style_solid : iMDStyle == "Dotted" ? line.style_dotted : line.style_dashed
+
+
+//==== Midnight Open ====
+if iMDisplay
+    var line dayLine = na
+    dayLine :=line.new(tMidnight, high, tMidnight, low, xloc.bar_time, extend.both, iMDColor, _DStyle, 1)
+    //if not iMDHistory
+       //line.delete(dayLine[1])
+
+if iMDisplay
+    var openMidnight  = 0.0
+    if tMidnight
+        if not tMidnight[1]
+            openMidnight  := open
+        else
+            openMidnight := math.max(open, openMidnight)
+
+    var label lb = na
+    var line lne = na
+    if openMidnight != openMidnight[1]
+        if barstate.isconfirmed
+            line.set_x2(lne, tMidnight)
+            lne := line.new(tMidnight, openMidnight, last_bar_time + 14400000/2, openMidnight, xloc.bar_time, extend.none, iMColor, _MStyle, 1)
+            if iMLabel
+                lb  := label.new(last_bar_time + 14400000/2, openMidnight, "Midnight", xloc.bar_time, yloc.price, na, label.style_none, iMColor, size.normal, text.align_right)
+            label.delete(lb[1])
+            if not iMHistory
+                line.delete(lne[1])
+//===========================
+
+
+//==== 8:30 Open ====
+if i8Display
+    var open830  = 0.0
+    if t830
+        if not t830[1]
+            open830  := open
+        else
+            open830 := math.max(open, open830)
+
+    var label lb2 = na
+    var line lne2 = na
+    if open830 != open830[1]
+        if barstate.isconfirmed
+            line.set_x2(lne2, t830 - 30600000)
+            lne2 := line.new(t830, open830, last_bar_time + 14400000/2, open830, xloc.bar_time, extend.none, i8Color, _8Style, 1)
+            if i8Label
+                lb2  := label.new(last_bar_time + 14400000/2, open830, "8:30", xloc.bar_time, yloc.price, na, label.style_none, i8Color, size.normal, text.align_right)
+            label.delete(lb2[1])
+            if not i8History
+                line.delete(lne2[1])
+//===========================
